@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+  <link href="resources/css/style.css" rel="stylesheet" type="text/css" media="all" /> 
+<head >
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+<script>
+function validateForm()
+{
+var email=document.forms["validateForm1"]["username"].value;// document.getElementById("username").value;
+var y=document.forms["validateForm1"]["password"].value;//documentgetElementById("password").value;
+//alert("test ");
+//alert(email);
+//alert(y);
+if ((/(.+)@(.+){2,}\.(.+){2,}/.test(email)) || email=="" || email==null) { } else {
+    alert("Please enter a valid email");
+    return false;
+}
+if (y==null || y=="")
+  {
+  alert("Password must be filled out");
+  return false;
+  }
+
+}
+
+
+//Navigation decission flags.
+var registerFlag=false;
+var loginFlag=false;
+
+//mark navigation flag. Supply redirection URL.
+function toLogin()
+{
+	registerFlag=false;
+ 	loginFlag=true;
+ 	document.getElementById("validateForm").action="index.html";
+}
+
+//mark request REST resource flag.
+function toRegister()
+{
+	loginFlag=false;
+	registerFlag=true;
+}
+
+
+//validate user input and execute appropriate action.
+function validateForm()
+{
+	if(registerFlag){
+var email=document.getElementById("username").value;
+var password=document.getElementById("password").value;
+var name=document.getElementById("name").value;
+var flag=true;
+alert("test "); 
+
+if (email=="" || email==null)
+{
+	alert("Email must be filled out");
+	   document.getElementById("forUsername").innerHTML="Please enter a valid email";
+	    flag = false;
+	} 
+else if((/(.+)@(.+){2,}\.(.+){2,}/.test(email))) { } else {
+    alert("Please enter a valid email");
+   document.getElementById("forUsername").innerHTML="Please enter a valid email";
+    flag= false;
+}
+
+if (password==null || password=="")
+  {
+  alert("Password must be filled out");
+  document.getElementById("forPassword").innerHTML="Password must be filled out";
+ flag = false;
+  }
+
+if (name==null || name=="")
+{
+alert("Name must be filled out");
+document.getElementById("forName").innerHTML="Name must be filled out";
+flag = false;
+}
+  
+  if(flag)
+  {
+	  //remove eventual error messages
+	 document.getElementById("forUsername").innerHTML="";
+	 document.getElementById("forPassword").innerHTML="";
+	 document.getElementById("forName").innerHTML="";
+	 document.getElementById("errorLabel").innerHTML="Registration in progress";
+		 
+	 //post login credentials in a JSON object using AJAX
+	 postJSON(createJSONobject(email, password, name));
+	 
+  }else{
+	  document.getElementById("errorLabel").innerHTML="Check error labels!";
+	return flag;
+  }
+	}
+}
+
+//create JSON object
+function createJSONobject(username,password,name){
+	//assign form values to JSON object
+	var JSONObject= '{username:"'+username+'",password:"'+password+'",name:"'+name+'"}';
+	return JSONObject;
+}
+
+//determine appropriate XMLHttpRequest/ActiveXObject request based on browser
+function getHMLHttpRequest(){
+	var http_request = new XMLHttpRequest();
+	   
+	   try{
+	      // Opera 8.0+, Firefox, Chrome, Safari
+	      http_request = new XMLHttpRequest();
+	   }catch (e){
+	      // Internet Explorer Browsers
+	      try{
+	         http_request = new ActiveXObject("Msxml2.XMLHTTP");
+	      }catch (e) {
+	         try{
+	            http_request = new ActiveXObject("Microsoft.XMLHTTP");
+	         }catch (e){
+	            // Something went wrong
+	            alert("Your browser broke!");
+	            return false;
+	         }
+	      }
+	   }
+	   return http_request;
+}
+
+function postJSON(jsonObjj)
+{
+   var http_request = getHMLHttpRequest();
+
+   //call AJAX onreadystatechange and post XMLHttpRequest/ActiveXObject to REST server
+   http_request.onreadystatechange  = function(){
+
+	   if(http_request.status==400)
+		   return null;
+	   
+	       if ( http_request.readyState==4)
+	      {
+	    	     // Javascript function JSON.parse to parse response JSON data
+	    	     var jsonObj = JSON.parse(http_request.responseText);
+
+	    		 
+	    	     document.getElementById("errorLabel").innerHTML= jsonObj.status;
+	      } 
+	   }
+
+   document.getElementById("loginLabel").innerHTML="Registering "+document.getElementById("username").value;
+   //specify a POST request, webResource and asynchronous 
+   http_request.open("POST", "http://localhost:8080/toDoListRestful_1/rest/clients/registerClient", false);
+   //set content type to application/json
+   http_request.setRequestHeader("Content-type", "application/json");                    
+   http_request.send(jsonObjj);//perform post 
+   
+	} 
+</script>
+
+
+</head>
+<body>
+<div class="banner">
+				  <img class="logo" src="resources/gfx/task_tracker.png">
+			
+				  <div class="loginInfo"><label class="loginLabel" id="loginLabel"></label> 
+				  </div>
+				  <h1>Register To Task Manager</h1>
+				
+</div>
+<hr>
+<div class="container">
+<form  id="validateForm" onsubmit="return validateForm()">
+	<table class="login">
+		
+		<tr><td class="left"> Username:</td> 
+			<td class="right"><input type="text" id="username" name="username"></td>
+			<td class="right"><label class="loginLabel" id="forUsername"></label></td>
+		</tr>
+		<tr><td class="left"> Password:</td> 
+			<td class="right"><input type="password" id="password" name="password"></td>
+			<td class="right"><label class="loginLabel" id="forPassword"></label></td>
+		</tr>
+		<tr><td class="left"> Name:</td> 
+			<td class="right"><input type="text" id="name" name="name"></td>
+			<td class="right"><label class="loginLabel" id="forName"></label></td>
+		</tr>
+		<tr><td class="left"> </td> 
+			<td class="rightButtons"> 
+				<input class="leftButton" type="submit" value="Login Page" name="btnToLogin" align="left" onclick="toLogin();">
+				<input class="rightButton" type="submit" value="Register" name="btnRegister" align="right" onClick="toRegister();">
+			</td>
+		</tr>
+			
+		
+	</table>	</form>
+	
+	<table class="login">
+		<tr>
+			<td class="loginError"><label class="loginLabel" id="errorLabel"></label></td>
+		</tr>
+	</table>
+
+</div>
+			
+			
+
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<link href="resources/css/style.css" rel="stylesheet" type="text/css"
+	media="all" />
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+</head>
+<script type="text/javascript">
+
+var cookieValue="";
+
+function postJSON(jsonObjj)
+{
+   var http_request = new XMLHttpRequest();
+   
+ //determine appropriate XMLHttpRequest/ActiveXObject request based on browser
+   try{
+      // Opera 8.0+, Firefox, Chrome, Safari
+      http_request = new XMLHttpRequest();
+   }catch (e){
+      // Internet Explorer Browsers
+      try{
+         http_request = new ActiveXObject("Msxml2.XMLHTTP");
+      }catch (e) {
+         try{
+            http_request = new ActiveXObject("Microsoft.XMLHTTP");
+         }catch (e){
+            // Something went wrong
+            alert("Your browser broke!");
+            return false;
+         }
+      }
+   }
+
+
+   //call AJAX onreadystatechange and post XMLHttpRequest/ActiveXObject to REST server
+   http_request.onreadystatechange  = function(){
+     //  alert("in ajax. status: "+http_request.status+" readyState: "+http_request.readyState);
+	       if (http_request.readyState==4)
+	      {
+	    	     // Javascript function JSON.parse to parse JSON data
+	    	     var jsonObj = JSON.parse(http_request.responseText);
+
+	    	     // jsonObj variable now contains the data structure and can
+	    	     alert("jsonObj.url: "+jsonObj.url+" jsonObj.username: "+jsonObj.username+
+	    	 	        " jsonObj.status: "+jsonObj.status);
+ 	 	        
+	    		document.getElementById("cookieLabel").value=jsonObj.username;
+	    		createCookie("toDoList",jsonObj.username,0) 
+	    	     document.getElementById("loginForm").action = jsonObj.url;
+	      } 
+	   } 
+
+   
+ //  alert("Posting");
+   //specify a POST request, webResource and asynchronous 
+   http_request.open("POST", "http://localhost:8080/toDoListRestful_1/rest/clients/loginClient", false);
+   //set content type to application/json
+   http_request.setRequestHeader("Content-type", "application/json");                    
+   http_request.send(jsonObjj);//perform post 
+//   alert("Post sent");
+  
+   
+	}
+
+
+   
+
+//Navigation decission flags.
+var menuFlag=false;
+var registerFlag=false;
+
+//mark navigation flag. Supply redirection URL.
+function toRegister()
+{
+	menuFlag=false;
+ 	registerFlag=true;
+ 	document.getElementById("loginForm").action="register.html";
+}
+
+//mark request REST resource flag. Supply REST resource URL.
+function toMenu()
+{
+	menuFlag=true;
+	registerFlag=false;
+	//document.getElementById("loginForm").action="http://localhost:8080/toDoListRestful_1/rest/clients/loginClient";
+}
+
+//validate user input and execute appropriate action.
+function validateForm()
+{
+	if(menuFlag){
+var email=document.getElementById("username").value;
+var password=document.getElementById("password").value;
+var flag=true;
+alert("test "); 
+
+if (email=="" || email==null)
+{
+	alert("Email must be filled out");
+	   document.getElementById("forUsername").innerHTML="Please enter a valid email";
+	    flag = false;
+	} 
+else if((/(.+)@(.+){2,}\.(.+){2,}/.test(email))) { } else {
+    alert("Please enter a valid email");
+   document.getElementById("forUsername").innerHTML="Please enter a valid email";
+    flag= false;
+}
+if (password==null || password=="")
+  {
+  alert("Password must be filled out");
+  document.getElementById("forPassword").innerHTML="Password must be filled out";
+ flag = false;
+  }
+  
+  if(flag)
+  {
+	  //remove eventual error messages
+	 document.getElementById("forUsername").innerHTML="";
+	 document.getElementById("forPassword").innerHTML="";
+
+	 //post login credentials in a JSON object using AJAX
+	 postJSON(createJSONobject(email, password));
+	 
+	 //document.getElementById("loginForm").action = "http://localhost:8080/toDoListRestful_1/main.html";
+  }else{
+	return flag;
+  }
+	}
+}
+
+
+//create JSON object
+function createJSONobject(username,password){
+	//assign form values to JSON object
+	var JSONObject= '{username:"'+username+'",password:"'+password+'"}';
+	return JSONObject;
+}
+
+
+
+function createCookie(name,value,days) {
+	if (days) {
+		var date = new Date();
+		date.setTime(date.getTime()+(days*24*60*60*1000));
+		var expires = "; expires="+date.toGMTString();
+	}
+	else var expires = "";alert(name+"="+value+expires+"; path=/");
+	document.cookie = name+"="+value+expires+"; path=/";
+}
+
+</script>
+<body>
+	<div class="banner">
+		<img class="logo" src="resources/gfx/TaskCoach.png">
+
+		<div class="loginInfo">
+			<label class="loginLabel" id="loginLabel"></label>
+		</div>
+		<h1>Login To Task Manager</h1>
+
+	</div>
+	<hr>
+	<div class="container">
+		<form id ="loginForm" onsubmit="return validateForm()" method="POST">
+			<table class="login">
+
+				<tr>
+					<td class="left">Username:</td>
+					<td class="right"><input type="text" id="username"
+						name="username" value="ivo@ivo.ie"></td>
+					<td class="right"><label class="loginLabel" id="forUsername"></label></td>
+				</tr>
+				<tr>
+					<td class="left">Password:</td>
+					<td class="right"><input type="password" id="password"
+						name="password" value="ivo"></td>
+					<td class="right"><label class="loginLabel" id="forPassword"></label></td>
+				</tr>
+				<tr>
+					<td class="left"></td>
+					<td class="rightButtons"><input class="leftButton"
+						type="submit" value="New User" name="btnNewUser" align="left" onclick="toRegister();">
+						<input class="rightButton" type="submit" value="Login"
+						name="btnLogin" onclick="toMenu();"></td>
+					<td class="right"><label class="loginLabel" id="forLogin"></label></td>
+				</tr>
+				<tr>
+				</tr>
+			</table>
+		</form>
+	</div>
+
+<input type="hidden" id="cookieLabel" name="cookieLabel" value="">
+
+</body>
+</html>

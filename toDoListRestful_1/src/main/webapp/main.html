@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+  <link href="resources/css/style.css" rel="stylesheet" type="text/css" media="all" /> 
+<head >
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+</head>
+<script type="text/javascript">
+
+function readCookie(){
+
+	var name = "toDoList" + "=";
+	var ca = document.cookie.split(';');
+	for(var i=0; i<ca.length; i++) 
+	  {
+	  var c = ca[i].trim();
+	  if (c.indexOf(name)==0) return c.substring(name.length,c.length);
+	}
+	return "";
+	
+}
+
+function deleteCookie(){
+	//document.cookie = "toDoList=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+	//document.cookie = 'toDoList' + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+	var oldValue=readCookie();
+	document.cookie = "toDoList"+"="+oldValue+"; expires=Thu, 01 Jan 1970 00:00:01 GMT"+"; path=/";
+}
+
+function updateCookieLabel(){
+	var user = readCookie();
+	document.getElementById("cookieLabel").innerHTML=user;
+	var pk=getClientPK(createJSONobject(user));
+}
+
+//create JSON object
+function createJSONobject(username){
+	//assign form values to JSON object
+	var JSONObject= '{username:"'+username+'",password:"password"}';
+	return JSONObject;
+}
+
+//create JSON object
+function createJSONobject(username, task){
+	//assign form values to JSON object
+	var JSONObject= '{username:"'+username+'",task:"'+task+'"}';
+	return JSONObject;
+}
+
+function getXMLHttpRequest(){
+	var http_request = new XMLHttpRequest();
+	   
+	 //determine appropriate XMLHttpRequest/ActiveXObject request based on browser
+	   try{
+	      // Opera 8.0+, Firefox, Chrome, Safari
+	      http_request = new XMLHttpRequest();
+	   }catch (e){
+	      // Internet Explorer Browsers
+	      try{
+	         http_request = new ActiveXObject("Msxml2.XMLHTTP");
+	      }catch (e) {
+	         try{
+	            http_request = new ActiveXObject("Microsoft.XMLHTTP");
+	         }catch (e){
+	            // Something went wrong
+	            alert("Your browser broke!");
+	            return false;
+	         }
+	      }
+	   }
+	   return http_request;
+}
+
+function getClientPK(jsonObjj){
+
+	 var http_request =getXMLHttpRequest();
+
+	//  alert("Posting");
+   //specify a POST request, webResource and synchronous 
+   http_request.open("POST", "http://localhost:8080/toDoListRestful_1/rest/clients/loginClient/getPKbyUsername", true);
+   //set content type to application/json
+   http_request.setRequestHeader("Content-type", "application/json");                    
+   http_request.send(jsonObjj);//perform post 
+//   alert("Post sent");
+
+ //call AJAX onreadystatechange and post XMLHttpRequest/ActiveXObject to REST server
+   http_request.onreadystatechange  = function(){
+     //  alert("in ajax. status: "+http_request.status+" readyState: "+http_request.readyState);
+       if (http_request.readyState==4)
+      {
+    	     getTasks(JSON.parse(http_request.responseText));
+      } 
+   }  
+}
+
+
+
+function getTasks(jsonObjj)
+{
+   var http_request =getXMLHttpRequest();
+
+   //call AJAX onreadystatechange and post XMLHttpRequest/ActiveXObject to REST server
+   http_request.onreadystatechange  = function(){
+     //  alert("in ajax. status: "+http_request.status+" readyState: "+http_request.readyState);
+	       if (http_request.readyState==4)
+	      {
+	    	   //alert("in if statement"); //alert(http_request.responseText);
+	    	     // Javascript function JSON.parse to parse JSON data
+	    	     var jsonObj = JSON.parse(http_request.responseText);
+	    	     //populate task table
+	    	     updateTaskTable(jsonObj);
+	      } 
+	   } 
+
+   var clientPK = JSON.parse(jsonObjj); 
+ //  alert("Posting");
+   //specify a POST request, webResource and asynchronous 
+   http_request.open("POST", "http://localhost:8080/toDoListRestful_1/rest/clients/loginClient/findTasksByPK", true);
+   //set content type to application/json
+   http_request.setRequestHeader("Content-type", "application/json");  
+                    
+   http_request.send('{pk:"'+clientPK+'"}');//perform post 
+//   alert("Post sent");   
+	}
+
+function addTask()
+{
+	var task=document.getElementById("newTask").value;
+	
+	if(task.trim()!=""){
+		
+   var http_request =getXMLHttpRequest();
+
+   //call AJAX onreadystatechange and post XMLHttpRequest/ActiveXObject to REST server
+   http_request.onreadystatechange  = function(){
+    
+	       if (http_request.readyState==4)
+	      {
+	    	   
+	    	     // Javascript function JSON.parse to parse JSON data
+	    	     var jsonObj = JSON.parse(http_request.responseText);
+	    	     
+	    	     //don't call the whole shabang again, only insert newest task to table
+	    	     insertToTaskTable(jsonObj.task, "Not Implemented Yet");
+	      } 
+	   } 
+
+   var jsonTask=createJSONobject(readCookie(), task); 
+ //  alert("Posting");
+   //specify a POST request, webResource and asynchronous 
+   http_request.open("POST", "http://localhost:8080/toDoListRestful_1/rest/clients/loginClient/addTask", true);
+   //set content type to application/json
+   http_request.setRequestHeader("Content-type", "application/json");  
+                    
+   http_request.send(jsonTask);//perform post 
+  
+	}//end if(task.trim()!="")
+	}//end function addTask()
+
+
+function updateTaskTable(jsonTaskArray){
+	for (var key in jsonTaskArray)
+	{
+	   if (jsonTaskArray.hasOwnProperty(key))
+	   {
+	      // here you have access to
+	      var tName = jsonTaskArray[key].name;
+	      insertToTaskTable(tName, "Not Implemented Yet");
+	   }
+	}
+}
+
+
+function insertToTaskTable(task, dateDue)
+{
+var table = document.getElementById("taskTable");
+var x = table.rows.length;
+var row = table.insertRow(1);
+row.setAttribute('onmouseover','this.style.backgroundColor="#ffff66";'); // for FF
+row.setAttribute('onmouseout','this.style.backgroundColor="#d4e3e5";'); // for FF
+row.onmouseover = function() {this.style.backgroundColor="#ffff66";}; // for IE
+row.onmouseout = function() {this.style.backgroundColor="#d4e3e5";}; // for IE
+
+//onmouseover="this.style.backgroundColor='#ffff66';" onmouseout="this.style.backgroundColor='#d4e3e5';"
+var cell1 = row.insertCell(0);
+var cell2 = row.insertCell(1);
+var cell3 = row.insertCell(2);
+cell1.innerHTML = task;
+cell1.setAttribute('id','cell'+x);
+cell1.id='cell'+x;
+cell2.innerHTML = dateDue;
+cell3.innerHTML = '<input id="cell'+x+'" type="submit" value="edit" name="Edit" onclick="editTask(\'cell'+x+'\');" '+
+'STYLE="color: #FFFFFF; background-color: #72A4D2;"  onmouseover="this.style.backgroundColor=\'#BCF5A9\';" onmouseout="this.style.backgroundColor=\'#72A4D2\';">'+
+'<input id="cell'+x+'b" type="submit" value="delete" name="Delete" onclick="deleteTask(\'cell'+x+'\');"  '+
+'STYLE="color: #FFFFFF; background-color: #72A4D2;"  onmouseover="this.style.backgroundColor=\'#BCF5A9\';" onmouseout="this.style.backgroundColor=\'#72A4D2\';">';
+}
+
+function editTask(cellID){
+	var task=document.getElementById(cellID).innerHTML;
+	var newTask=prompt("Please edit your task",task);
+
+	if (newTask!=null) {
+		if(newTask!=task){
+
+			var http_request = getXMLHttpRequest();
+			var jsonTask = '{oldTask:"'+task+'",newTask:"'+newTask+'"}';
+			
+			//specify a POST request, webResource and asynchronous 
+			http_request.open("POST", "http://localhost:8080/toDoListRestful_1/rest/clients/loginClient/editTask", true);
+			//set content type to application/json
+			http_request.setRequestHeader("Content-type", "application/json");  
+			                 
+			http_request.send(jsonTask);//perform post 
+			
+			}//end if(newTask!=task)
+	  }//end if (newTask!=null)	
+}
+
+function deleteTask(cellID){
+	var task=document.getElementById(cellID).innerHTML;	
+	var user=readCookie();
+	var r=confirm("Delete task: "+task+"?");
+	
+	if (r==true)
+	  {
+		var http_request = getXMLHttpRequest();
+
+		var jsonTask = '{task:"'+task+'",username:"'+user+'"}';
+		//specify a POST request, webResource and asynchronous 
+		http_request.open("POST", "http://localhost:8080/toDoListRestful_1/rest/clients/loginClient/deleteTask", true);
+		//set content type to application/json
+		http_request.setRequestHeader("Content-type", "application/json");  
+		                 
+		http_request.send(jsonTask);//perform post 
+		
+	  }
+}
+
+function logoutUser(){
+	deleteCookie();
+	var cookiee=readCookie();
+	document.getElementById("logoutForm").action='index.html';
+}
+</script>
+<body onload="updateCookieLabel();">
+<div class="banner">
+				  <img class="logo" src="resources/gfx/tasks.png">
+			
+				  <div class="loginInfo"><label class="loginLabel" id="cookieLabel">cookie goes here</label> 
+				  </div>
+				  
+				  <h1>Manage To Do List</h1>
+				
+</div>
+<hr>
+<div class="container">
+
+<div class="output">
+	<form id="taskTableForm">
+				<!--  div style="width:318px; height:180px; overflow:auto;"-->
+				<table id="taskTable" class="hovertable" cellspacing="0" cellpadding="1" border="1" align="center" overflow:auto;>
+				<tr>
+				  <td >Task</td>
+				  <td>Date/Time</td>
+				  <td></td>
+				</tr>	
+			</table>
+	</form>
+	 <div class="loginInfo">
+	  <form id="logoutForm">
+	  <input class="loginButton" type="submit" value="logout" name="logout" onclick="logoutUser();">
+	  </form>
+ </div>
+</div>
+<div class="output">
+	<form>
+	<table class="login">
+		
+		<tr><td class="left"> New Task:</td> 
+			<td class="right"><input type="text" id="newTask" name="newTask"></td></tr>
+		<tr><td class="left"></td>
+			<td class="rightButtons">  
+					<input class="rightButton" type="submit" value="Add Task" name="btnNewTask" onsubmit="addTask();"></td>
+		</tr>
+		
+	</table>	
+	</form>
+</div>
+
+</div>
+			
+			
+
+</body>
+</html>
